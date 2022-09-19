@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# Read data from stdin
+DATA=$(echo $1 | sed -e 's/^.*\///' | sed 's@+@ @g;s@%@\\x@g' | xargs -0 printf "%b")
+
+if [[ -z $DATA ]]; then
+	DATA="{}"
+fi
+
+if (( $(echo $DATA | wc --bytes) > 1000 )); then
+	>&2 echo "status 431"
+	echo "Metadata too large!!!"
+	exit 0
+fi
+
+
+# Read session uuid
+SESSION=$(echo $1 | cut -d / -f 1)
+if ! [[ ${SESSION//-/} =~ ^[[:xdigit:]]{32}$ ]]; then
+  echo "Session should be a UUID"
+	>&2 echo "status 400"
+	exit 1
+fi
+
+OUTPUT=$(echo $DATA | jq ".timecode = \"$(date +%s)\"" -)
+if [[ -z $OUTPUT ]]; then
+	exit 1
+fi
+echo $OUTPUT >> ./logs/$SESSION.json.log
+chmod o+r ./logs/$SESSION.json.log
+
+>&2 echo "header Content-Type image/png"
+>&2 echo "header Access-Control-Allow-Origin *"
+>&2 echo "log $(echo $OUTPUT | gpg --armor --sign $TRUSTED_TIMECODE_KEYID)"
+
+echo $OUTPUT | gpg --sign $TRUSTED_TIMECODE_KEYID | qrencode -s 4 -o - -r /dev/stdin

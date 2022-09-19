@@ -4,8 +4,8 @@ A web service made with wwebs, that allows websites to embed a trustworthy timec
 
 ## Dependencies
 
-Requires qrencode, gpg, and jq to be available in $PATH.
+Requires qrencode, gpg, sed, wc, cut, chmod, date, xargs, and jq to be available in $PATH.
 
 ## Environment
 
-TRUSTED_TIMECODE_KEYID is the id of the key to use for signing.
+TRUSTED_TIMECODE_KEYID is the id of the gpg key to use for signing.
